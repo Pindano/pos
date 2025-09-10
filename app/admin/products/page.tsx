@@ -110,11 +110,16 @@ export default function AdminProductsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-primary">Kes {product.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">Ksh {product.price.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">per {product.unit}</p>
                   </div>
                   <div className="text-right">
-                   
+                  <div className="flex items-center gap-2">
+                      {product.stock_quantity < 10 && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+                      <Badge variant={product.stock_quantity > 10 ? "default" : "destructive"}>
+                        {product.stock_quantity} in stock
+                      </Badge>
+                    </div>
                     <Badge variant={product.is_available ? "default" : "secondary"} className="mt-1">
                       {product.is_available ? "Available" : "Unavailable"}
                     </Badge>

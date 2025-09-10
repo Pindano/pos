@@ -67,7 +67,7 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <p className="font-medium">Total</p>
-                      <p className="text-muted-foreground">Kes {order.total_amount.toFixed(2)}</p>
+                      <p className="text-muted-foreground">Ksh {order.total_amount.toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="font-medium">Date</p>

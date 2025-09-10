@@ -6,6 +6,7 @@ import { GeistMono } from "geist/font/mono"
 import { Toaster } from "@/components/ui/toaster"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { NetworkStatus } from "@/components/network-status"
+import { BottomNavigation } from "@/components/bottom-navigation"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -65,6 +66,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>
           {children}
+          <BottomNavigation />
           <Toaster />
           <PWAInstallPrompt />
           <NetworkStatus />

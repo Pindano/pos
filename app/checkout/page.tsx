@@ -139,13 +139,13 @@ export default function CheckoutPage() {
                     <span>
                       {item.product.name} × {item.quantity}
                     </span>
-                    <span>Kes {(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span>Ksh {(item.product.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <Separator />
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>Kes {getTotalPrice().toFixed(2)}</span>
+                  <span>Ksh {getTotalPrice().toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -248,7 +248,7 @@ export default function CheckoutPage() {
                         required
                         value={formData.customer_phone}
                         onChange={(e) => setFormData((prev) => ({ ...prev, customer_phone: e.target.value }))}
-                        placeholder="+1234567890"
+                        placeholder="07123456789"
                       />
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export default function CheckoutPage() {
                       <span>
                         {item.product.name} × {item.quantity}
                       </span>
-                      <span>Kes {(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span>Ksh {(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -349,7 +349,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>Kes {getTotalPrice().toFixed(2)}</span>
+                  <span>Ksh {getTotalPrice().toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>

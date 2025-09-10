@@ -71,7 +71,7 @@ export default function CartPage() {
                       <h3 className="font-semibold">{item.product.name}</h3>
                       <p className="text-sm text-muted-foreground">{item.product.description}</p>
                       <p className="text-sm font-medium mt-1">
-                        Kes {item.product.price.toFixed(2)} per {item.product.unit}
+                        Ksh {item.product.price.toFixed(2)} per {item.product.unit}
                       </p>
                     </div>
 
@@ -103,7 +103,7 @@ export default function CartPage() {
                     </div>
 
                     <div className="text-right">
-                      <p className="font-semibold">Kes {(item.product.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-semibold">Ksh {(item.product.price * item.quantity).toFixed(2)}</p>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -141,7 +141,7 @@ export default function CartPage() {
                       <span>
                         {item.product.name} × {item.quantity}
                       </span>
-                      <span>Kes {(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span>Ksh {(item.product.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -150,7 +150,7 @@ export default function CartPage() {
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>Kes {getTotalPrice().toFixed(2)}</span>
+                  <span>Ksh {getTotalPrice().toFixed(2)}</span>
                 </div>
 
                 <Button className="w-full" size="lg" onClick={() => router.push("/checkout")}>

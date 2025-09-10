@@ -5,7 +5,7 @@ export interface Product {
   price: number
   unit: string // kg, pieces, bunches, etc.
   category: string // vegetables, fruits, grains, etc.
-  
+  stock_quantity: number
   is_available: boolean
   created_at: string
   updated_at: string

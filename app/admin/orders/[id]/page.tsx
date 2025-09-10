@@ -45,7 +45,7 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
     preparing: { color: "text-orange-600", bg: "bg-orange-100" },
     out_for_delivery: { color: "text-purple-600", bg: "bg-purple-100" },
     delivered: { color: "text-green-600", bg: "bg-green-100" },
-    cancelled: { color: "text-red-200", bg: "bg-red-500" },
+    cancelled: { color: "text-red-600", bg: "bg-red-100" },
   }
 
   return (

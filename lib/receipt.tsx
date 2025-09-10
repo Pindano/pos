@@ -41,8 +41,8 @@ export function generateReceiptText(data: ReceiptData): string {
   items.forEach((item) => {
     const name = item.product_name.length > 18 ? item.product_name.substring(0, 18) + ".." : item.product_name
     const qty = item.quantity.toString()
-    const price = `$${item.unit_price.toFixed(2)}`
-    const total = `$${item.total_price.toFixed(2)}`
+    const price = `Ksh ${item.unit_price.toFixed(2)}`
+    const total = `Ksh ${item.total_price.toFixed(2)}`
 
     receipt += `${name.padEnd(20)} ${qty.padEnd(5)} ${price.padEnd(8)} ${total.padStart(8)}\n`
   })

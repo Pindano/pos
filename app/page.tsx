@@ -45,9 +45,9 @@ const [searchQuery, setSearchQuery] = useState("")
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Store className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">Wambos Veges</h1>
+              <h1 className="text-xl font-bold">Wambo's Vegetables</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <AuthButton />
               <Link href="/notifications">
                 <Button variant="outline" size="sm">
@@ -69,7 +69,7 @@ const [searchQuery, setSearchQuery] = useState("")
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 pb-20 md:pb-6">
       {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>  {/* Simple spinner */}
@@ -124,7 +124,7 @@ const [searchQuery, setSearchQuery] = useState("")
               <CardContent className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-primary">Kes {product.price.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">Ksh {product.price.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">per {product.unit}</p>
                   </div>
                   <Badge variant={product.stock_quantity > 10 ? "default" : "destructive"}>
