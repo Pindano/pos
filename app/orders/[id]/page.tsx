@@ -49,6 +49,8 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
   const [order, setOrder] = useState<Order | null>(null)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedItems, setEditedItems] = useState<OrderItem[]>([])
 
   useEffect(() => {
     fetchOrderDetails()
@@ -83,6 +85,57 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     } finally {
       setIsLoading(false)
     }
+  }
+  const handleEditOrder = () => {
+    setEditedItems([...orderItems])
+    setIsEditing(true)
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      const supabase = createClient()
+
+      // Update order items
+      for (const item of editedItems) {
+        const { error } = await supabase
+          .from("order_items")
+          .update({
+            quantity: item.quantity,
+            total_price: item.quantity * item.unit_price,
+          })
+          .eq("id", item.id)
+
+        if (error) throw error
+      }
+
+      // Recalculate total
+      const newTotal = editedItems.reduce((sum, item) => sum + item.total_price, 0)
+
+      const { error: orderError } = await supabase.from("orders").update({ total_amount: newTotal }).eq("id", params.id)
+
+      if (orderError) throw orderError
+
+      setOrderItems(editedItems)
+      setOrder((prev) => (prev ? { ...prev, total_amount: newTotal } : null))
+      setIsEditing(false)
+    } catch (error) {
+      console.error("Error updating order:", error)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditedItems([])
+    setIsEditing(false)
+  }
+
+  const updateItemQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) return
+
+    setEditedItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity, total_price: newQuantity * item.unit_price } : item,
+      ),
+    )
   }
 
   if (isLoading) {

@@ -65,7 +65,7 @@ export default function RootLayout({
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>
-          {children}
+        <div className="pb-20 md:pb-0">{children}</div>
           <BottomNavigation />
           <Toaster />
           <PWAInstallPrompt />

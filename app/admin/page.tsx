@@ -52,10 +52,10 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">KSh {totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">From {totalOrders} orders</p>
           </CardContent>
         </Card>
@@ -131,7 +131,7 @@ export default async function AdminDashboard() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">${order.total_amount.toFixed(2)}</p>
+                          <p className="font-medium">KSh {order.total_amount.toFixed(2)}</p>
                           <Badge variant="secondary" className="text-xs">
                             {order.status.replace("_", " ")}
                           </Badge>

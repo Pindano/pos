@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, ShoppingCart, Package, User, Bell } from "lucide-react"
+import { Home, ShoppingCart, Package, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useCartStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -24,14 +24,10 @@ const navigationItems = [
     href: "/orders",
     icon: Package,
   },
-  {
-    name: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-  },
+  
   {
     name: "Profile",
-    href: "/auth/login",
+    href: "/profile",
     icon: User,
   },
 ]
@@ -46,7 +42,7 @@ export function BottomNavigation() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 md:hidden">
       <div className="flex items-center justify-around py-2 px-4">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href
@@ -60,19 +56,26 @@ export function BottomNavigation() {
               className={cn(
                 "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors relative min-w-0 flex-1",
                 isActive
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
               )}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
                 {item.showBadge && totalItems > 0 && (
-                  <Badge className="absolute -top-2 -right-2 h-4 w-4 rounded-full p-0 text-xs flex items-center justify-center">
+                  <Badge className="absolute -top-2 -right-2 h-4 w-4 rounded-full p-0 text-xs flex items-center justify-center bg-red-500 text-white">
                     {totalItems > 99 ? "99+" : totalItems}
                   </Badge>
                 )}
               </div>
-              <span className="text-xs mt-1 truncate">{item.name}</span>
+              <span
+                className={cn(
+                  "text-xs mt-1 truncate",
+                  isActive ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-600 dark:text-gray-400",
+                )}
+              >
+                {item.name}
+              </span>
             </Link>
           )
         })}

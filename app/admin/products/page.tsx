@@ -14,6 +14,7 @@ export default function AdminProductsPage() {
   const { products, fetchProducts } = useProductStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>("all")
 
   useEffect(() => {
     fetchProducts()
@@ -26,7 +27,13 @@ export default function AdminProductsPage() {
 
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter
 
-    return matchesSearch && matchesCategory
+    const matchesAvailability =
+      availabilityFilter === "all" ||
+      (availabilityFilter === "available" && product.is_available) ||
+      (availabilityFilter === "unavailable" && !product.is_available)
+
+    return matchesSearch && matchesCategory && matchesAvailability
+  
   })
 
   const categories = Array.from(new Set(products.map((p) => p.category)))
@@ -62,8 +69,8 @@ export default function AdminProductsPage() {
             <CardTitle>Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex-1 min-w-64">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -85,6 +92,16 @@ export default function AdminProductsPage() {
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by availability" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  <SelectItem value="available">Available Only</SelectItem>
+                  <SelectItem value="unavailable">Unavailable Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -146,7 +163,7 @@ export default function AdminProductsPage() {
               <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No products found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || categoryFilter !== "all"
+                {searchQuery || categoryFilter !== "all" || availabilityFilter !== "all"
                   ? "No products match your search criteria."
                   : "Start by adding your first product."}
               </p>

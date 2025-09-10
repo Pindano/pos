@@ -94,6 +94,7 @@ export const useCartStore = create<CartStore>()(
 )
 
 export const useProductStore = create<ProductStore>()((set, get) => ({
+  
   products: [],
   isLoading: false,
   getProducts: () => get().products.filter((p) => p.is_available),

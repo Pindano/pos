@@ -24,7 +24,7 @@ export default function CartPage() {
                   Back to Shop
                 </Button>
               </Link>
-              <h1 className="text-xl font-bold">Shopping Cart</h1>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold">Shopping Cart</h1>
             </div>
           </div>
         </header>
