@@ -11,29 +11,29 @@ import { Suspense } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Fresh Market POS",
-  description: "Order fresh vegetables and groceries for delivery",
+  title: "Wambo's Vegetables",
+  description: "Order fresh vegetables and groceries",
   generator: "v0.app",
   manifest: "/manifest.json",
   
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Fresh Market",
+    title: "Wambo's Vegetables",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "Fresh Market POS",
-    title: "Fresh Market POS",
-    description: "Order fresh vegetables and groceries for delivery",
+    siteName: "",
+    title: "Wambo's Vegetables",
+    description: "Order fresh vegetables and groceries",
   },
   twitter: {
     card: "summary",
     title: "Fresh Market POS",
-    description: "Order fresh vegetables and groceries for delivery",
+    description: "Order fresh vegetables and groceries",
   },
 }
 export const viewport: Viewport = {
@@ -51,7 +51,7 @@ export default function RootLayout({
         <meta name="application-name" content="Fresh Market POS" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Fresh Market" />
+        <meta name="apple-mobile-web-app-title" content="Wambo's Vegetables" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
