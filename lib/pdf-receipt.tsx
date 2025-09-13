@@ -26,10 +26,99 @@ interface ReceiptData {
   paymentConfirmed?: boolean
 }
 
+// Helper function to convert decimal to fraction
+function decimalToFraction(decimal: number): string {
+  // Handle whole numbers
+  if (decimal % 1 === 0) {
+    return decimal.toString()
+  }
+
+  // Common fractions lookup for better readability
+  const commonFractions: { [key: string]: string } = {
+    '0.5': '½',
+    '0.25': '¼',
+    '0.75': '¾',
+    '0.33': '⅓',
+    '0.67': '⅔',
+    '0.2': '⅕',
+    '0.4': '⅖',
+    '0.6': '⅗',
+    '0.8': '⅘',
+    '0.17': '⅙',
+    '0.83': '⅚',
+    '0.125': '⅛',
+    '0.375': '⅜',
+    '0.625': '⅝',
+    '0.875': '⅞'
+  }
+
+  // Check for common fractions first
+  const decimalPart = (decimal % 1).toFixed(3)
+  if (commonFractions[decimalPart]) {
+    const wholePart = Math.floor(decimal)
+    return wholePart > 0 ? `${wholePart}${commonFractions[decimalPart]}` : commonFractions[decimalPart]
+  }
+
+  // Fall back to decimal representation for uncommon fractions
+  return decimal.toString()
+}
+
+// Helper function to format units properly (handles pluralization if needed)
+function formatProductUnit(unit: string, quantity: number): string {
+  if (!unit) return 'pcs' // fallback if no unit provided
+  
+  // Some units don't need pluralization
+  const nonPluralUnits = ['kg', 'g', 'ltr', 'ml', 'cm', 'm', 'km', 'lb', 'oz']
+  if (nonPluralUnits.includes(unit.toLowerCase())) {
+    return unit
+  }
+  
+  // Handle pluralization for countable units
+  if (quantity === 1) {
+    return unit
+  } else {
+    // Simple pluralization rules
+    if (unit.endsWith('s')) return unit
+    if (unit.endsWith('ch')) return `${unit}es`
+    if (unit.endsWith('y')) return `${unit.slice(0, -1)}ies`
+    return `${unit}s`
+  }
+}
+
+// Helper function to determine appropriate units based on product name
+function getProductUnit(productName: string, quantity: number): string {
+  const name = productName.toLowerCase()
+  
+  // Weight-based items (typically sold by kg)
+  if (name.includes('garlic') || name.includes('ginger') || name.includes('meat') || 
+      name.includes('flour') || name.includes('sugar') || name.includes('rice')) {
+    return quantity === 1 ? 'kg' : 'kg'
+  }
+  
+  // Liquid items
+  if (name.includes('oil') || name.includes('milk') || name.includes('juice')) {
+    return quantity === 1 ? 'ltr' : 'ltrs'
+  }
+  
+  // Bundle/bunch items
+  if (name.includes('dhania') || name.includes('spinach') || name.includes('kale') ||
+      name.includes('sukuma')) {
+    return quantity === 1 ? 'bunch' : 'bunches'
+  }
+  
+  // Bag items
+  if (name.includes('charcoal') || name.includes('cement')) {
+    return quantity === 1 ? 'bag' : 'bags'
+  }
+  
+  // Default to pieces for countable items
+  return quantity === 1 ? 'pc' : 'pcs'
+}
+
 export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   const { order, items, additionalCharges = [], businessSettings, paymentConfirmed = false } = data
 
-  // Create new PDF document
+  // Create new PDF document with better margins
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -40,6 +129,18 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   pdf.setFont("helvetica")
 
   let yPosition = 20
+  const leftMargin = 15
+  const rightMargin = 195
+  const pageWidth = 210
+  const pageHeight = 297
+
+  // Function to check if we need a new page
+  const checkPageBreak = (requiredSpace: number) => {
+    if (yPosition + requiredSpace > pageHeight - 20) {
+      pdf.addPage()
+      yPosition = 20
+    }
+  }
 
   // Header - Business Logo and Name
   if (businessSettings.logo_url) {
@@ -55,7 +156,7 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   // Business Name
   pdf.setFontSize(20)
   pdf.setFont("helvetica", "bold")
-  pdf.text(businessSettings.business_name, 105, yPosition, { align: "center" })
+  pdf.text(businessSettings.business_name, pageWidth/2, yPosition, { align: "center" })
   yPosition += 8
 
   // Business Address
@@ -64,18 +165,18 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   if (businessSettings.business_address) {
     const addressLines = businessSettings.business_address.split("\n")
     addressLines.forEach((line) => {
-      pdf.text(line.trim(), 105, yPosition, { align: "center" })
+      pdf.text(line.trim(), pageWidth/2, yPosition, { align: "center" })
       yPosition += 4
     })
   }
 
   // Business Contact
   if (businessSettings.business_phone) {
-    pdf.text(`Phone: ${businessSettings.business_phone}`, 105, yPosition, { align: "center" })
+    pdf.text(`Phone: ${businessSettings.business_phone}`, pageWidth/2, yPosition, { align: "center" })
     yPosition += 4
   }
   if (businessSettings.business_email) {
-    pdf.text(`Email: ${businessSettings.business_email}`, 105, yPosition, { align: "center" })
+    pdf.text(`Email: ${businessSettings.business_email}`, pageWidth/2, yPosition, { align: "center" })
     yPosition += 4
   }
 
@@ -85,7 +186,7 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   pdf.setFontSize(16)
   pdf.setFont("helvetica", "bold")
   const receiptTitle = paymentConfirmed ? "PAYMENT RECEIPT" : "ORDER RECEIPT"
-  pdf.text(receiptTitle, 105, yPosition, { align: "center" })
+  pdf.text(receiptTitle, pageWidth/2, yPosition, { align: "center" })
   yPosition += 10
 
   // Order Information
@@ -93,16 +194,16 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   pdf.setFont("helvetica", "normal")
 
   // Order details in two columns
-  pdf.text(`Order ID: #${order.id.slice(0, 8)}`, 20, yPosition)
+  pdf.text(`Order ID: #${order.id.slice(0, 8)}`, leftMargin, yPosition)
   pdf.text(`Date: ${new Date(order.created_at).toLocaleDateString()}`, 120, yPosition)
   yPosition += 6
 
-  pdf.text(`Customer: ${order.customer_name}`, 20, yPosition)
+  pdf.text(`Customer: ${order.customer_name}`, leftMargin, yPosition)
   pdf.text(`Status: ${order.status.replace("_", " ").toUpperCase()}`, 120, yPosition)
   yPosition += 6
 
   if (order.customer_phone) {
-    pdf.text(`Phone: ${order.customer_phone}`, 20, yPosition)
+    pdf.text(`Phone: ${order.customer_phone}`, leftMargin, yPosition)
   }
   if (paymentConfirmed) {
     pdf.text(`Payment: CONFIRMED`, 120, yPosition)
@@ -110,43 +211,78 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   yPosition += 6
 
   if (order.customer_address) {
-    pdf.text(`Address: ${order.customer_address}`, 20, yPosition)
-    yPosition += 6
+    // Handle long addresses by splitting into multiple lines
+    const maxAddressLength = 50
+    const address = order.customer_address
+    if (address.length > maxAddressLength) {
+      const addressParts = address.split(',').map(part => part.trim())
+      let currentLine = ''
+      addressParts.forEach((part, index) => {
+        if ((currentLine + part).length <= maxAddressLength) {
+          currentLine += (currentLine ? ', ' : '') + part
+        } else {
+          if (currentLine) {
+            pdf.text(`Address: ${currentLine}`, leftMargin, yPosition)
+            yPosition += 5
+          }
+          currentLine = part
+        }
+        if (index === addressParts.length - 1 && currentLine) {
+          const prefix = yPosition === (yPosition - 5) ? 'Address: ' : '         '
+          pdf.text(`${prefix}${currentLine}`, leftMargin, yPosition)
+          yPosition += 6
+        }
+      })
+    } else {
+      pdf.text(`Address: ${address}`, leftMargin, yPosition)
+      yPosition += 6
+    }
   }
 
   yPosition += 5
 
+  // Check for page break before items table
+  checkPageBreak(30)
+
   // Line separator
-  pdf.line(20, yPosition, 190, yPosition)
+  pdf.line(leftMargin, yPosition, rightMargin, yPosition)
   yPosition += 8
 
-  // Items header
+  // Items header with better spacing
   pdf.setFont("helvetica", "bold")
-  pdf.text("Item", 20, yPosition)
-  pdf.text("Qty", 120, yPosition)
-  pdf.text("Price", 140, yPosition)
+  pdf.text("Item", leftMargin, yPosition)
+  pdf.text("Qty", 110, yPosition)
+  pdf.text("Price", 135, yPosition)
   pdf.text("Total", 170, yPosition)
   yPosition += 6
 
-  pdf.line(20, yPosition, 190, yPosition)
+  pdf.line(leftMargin, yPosition, rightMargin, yPosition)
   yPosition += 6
 
-  // Items
+  // Items with better formatting
   pdf.setFont("helvetica", "normal")
   let itemsSubtotal = 0
 
   items.forEach((item) => {
+    // Check for page break before each item
+    checkPageBreak(8)
+    
     const itemTotal = item.unit_price * item.quantity
     itemsSubtotal += itemTotal
 
-    // Handle long product names by wrapping text
-    const productName = item.product_name.length > 30 
-      ? item.product_name.substring(0, 30) + "..." 
+    // Handle long product names by using text wrapping
+    const productName = item.product_name.length > 35 
+      ? item.product_name.substring(0, 32) + "..." 
       : item.product_name
 
-    pdf.text(productName, 20, yPosition)
-    pdf.text(item.quantity.toString(), 120, yPosition)
-    pdf.text(`KSh ${item.unit_price.toFixed(2)}`, 140, yPosition)
+    // Format quantity with units and fractions
+    const formattedQuantity = decimalToFraction(item.quantity)
+    const unit = formatProductUnit(item.unit || 'pcs', item.quantity) // Use item.unit from database
+    const quantityWithUnit = `${formattedQuantity} ${unit}`
+
+    pdf.text(productName, leftMargin, yPosition)
+    pdf.text(quantityWithUnit, 110, yPosition)
+    pdf.text(`KSh ${item.unit_price.toFixed(2)}`, 135, yPosition)
     pdf.text(`KSh ${itemTotal.toFixed(2)}`, 170, yPosition)
     yPosition += 5
   })
@@ -154,15 +290,17 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   // Add spacing before additional charges section
   if (additionalCharges.length > 0) {
     yPosition += 3
-    pdf.line(20, yPosition, 190, yPosition)
+    checkPageBreak(20)
+    
+    pdf.line(leftMargin, yPosition, rightMargin, yPosition)
     yPosition += 6
 
     // Additional Charges header
     pdf.setFont("helvetica", "bold")
-    pdf.text("Additional Charges", 20, yPosition)
+    pdf.text("Additional Charges", leftMargin, yPosition)
     yPosition += 6
 
-    pdf.line(20, yPosition, 190, yPosition)
+    pdf.line(leftMargin, yPosition, rightMargin, yPosition)
     yPosition += 6
 
     // Additional charges items
@@ -170,6 +308,7 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
     let chargesSubtotal = 0
 
     additionalCharges.forEach((charge) => {
+      checkPageBreak(8)
       chargesSubtotal += charge.amount
 
       // Charge name with description if available
@@ -178,65 +317,76 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
         chargeName += ` (${charge.description})`
       }
       
-      // Handle long charge names
-      if (chargeName.length > 50) {
-        chargeName = chargeName.substring(0, 50) + "..."
+      // Handle long charge names with proper text wrapping
+      if (chargeName.length > 45) {
+        const firstLine = chargeName.substring(0, 45)
+        const secondLine = chargeName.substring(45)
+        pdf.text(firstLine, leftMargin, yPosition)
+        yPosition += 4
+        pdf.text(`  ${secondLine}`, leftMargin, yPosition)
+      } else {
+        pdf.text(chargeName, leftMargin, yPosition)
       }
 
-      pdf.text(chargeName, 20, yPosition)
       pdf.text(`KSh ${charge.amount.toFixed(2)}`, 170, yPosition)
       yPosition += 5
     })
 
     yPosition += 3
-    pdf.line(20, yPosition, 190, yPosition)
+    checkPageBreak(25)
+    
+    pdf.line(leftMargin, yPosition, rightMargin, yPosition)
     yPosition += 8
 
     // Subtotals breakdown
     pdf.setFont("helvetica", "normal")
     pdf.setFontSize(10)
     
-    pdf.text(`Items Subtotal:`, 120, yPosition)
+    pdf.text(`Items Subtotal:`, 110, yPosition)
     pdf.text(`KSh ${itemsSubtotal.toFixed(2)}`, 170, yPosition)
     yPosition += 6
 
-    pdf.text(`Additional Charges:`, 120, yPosition)
+    pdf.text(`Additional Charges:`, 110, yPosition)
     pdf.text(`KSh ${chargesSubtotal.toFixed(2)}`, 170, yPosition)
     yPosition += 6
 
     // Total line
-    pdf.line(120, yPosition, 190, yPosition)
+    pdf.line(110, yPosition, rightMargin, yPosition)
     yPosition += 6
 
     // Grand Total
     pdf.setFont("helvetica", "bold")
     pdf.setFontSize(12)
     const grandTotal = itemsSubtotal + chargesSubtotal
-    pdf.text(`TOTAL:`, 120, yPosition)
+    pdf.text(`TOTAL:`, 110, yPosition)
     pdf.text(`KSh ${grandTotal.toFixed(2)}`, 170, yPosition)
     yPosition += 8
 
   } else {
     // No additional charges - just show items total
     yPosition += 3
-    pdf.line(20, yPosition, 190, yPosition)
+    checkPageBreak(15)
+    
+    pdf.line(leftMargin, yPosition, rightMargin, yPosition)
     yPosition += 6
 
     // Total
     pdf.setFont("helvetica", "bold")
     pdf.setFontSize(12)
-    pdf.text(`TOTAL:`, 120, yPosition)
+    pdf.text(`TOTAL:`, 110, yPosition)
     pdf.text(`KSh ${order.total_amount.toFixed(2)}`, 170, yPosition)
     yPosition += 8
   }
 
   // Payment Method
+  checkPageBreak(15)
   pdf.setFont("helvetica", "normal")
   pdf.setFontSize(10)
-  pdf.text(`Payment Method: ${order.payment_method.replace("_", " ").toUpperCase()}`, 20, yPosition)
+  pdf.text(`Payment Method: ${order.payment_method.replace("_", " ").toUpperCase()}`, leftMargin, yPosition)
   yPosition += 10
 
   // Generate QR Code
+  checkPageBreak(35)
   try {
     const qrData = JSON.stringify({
       orderId: order.id,
@@ -257,10 +407,10 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
     })
 
     // Add QR code to PDF
-    pdf.addImage(qrCodeDataURL, "PNG", 20, yPosition, 25, 25)
+    pdf.addImage(qrCodeDataURL, "PNG", leftMargin, yPosition, 25, 25)
 
     // QR code description
-    pdf.text("Scan QR code for order verification", 50, yPosition + 12)
+    pdf.text("Scan QR code for order verification", leftMargin + 30, yPosition + 12)
     yPosition += 30
   } catch (error) {
     console.error("Error generating QR code:", error)
@@ -268,16 +418,17 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
   }
 
   // Footer
+  checkPageBreak(20)
   if (businessSettings.receipt_footer) {
     pdf.setFontSize(9)
     pdf.setFont("helvetica", "italic")
-    pdf.text(businessSettings.receipt_footer, 105, yPosition, { align: "center" })
+    pdf.text(businessSettings.receipt_footer, pageWidth/2, yPosition, { align: "center" })
     yPosition += 6
   }
 
   // Timestamp
   pdf.setFontSize(8)
-  pdf.text(`Generated on: ${new Date().toLocaleString()}`, 105, yPosition, { align: "center" })
+  pdf.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth/2, yPosition, { align: "center" })
 
   return pdf.output("blob")
 }

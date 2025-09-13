@@ -20,8 +20,31 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
   // Fetch order details
   const { data: order, error: orderError } = await supabase.from("orders").select("*").eq("id", id).single()
 
-  // Fetch order items
-  const { data: orderItems = [], error: itemsError } = await supabase.from("order_items").select("*").eq("order_id", id)
+  // Fetch order items with product units using JOIN
+  const { data: orderItems = [], error: itemsError } = await supabase
+    .from("order_items")
+    .select(`
+      id,
+      order_id,
+      product_id,
+      product_name,
+      quantity,
+      unit_price,
+      total_price,
+      created_at,
+      products:product_id (
+        unit,
+        category,
+        description
+      )
+    `)
+    .eq("order_id", id)
+
+  // Transform the data to include unit at the top level for easier access
+  const orderItemsWithUnits = orderItems.map(item => ({
+    ...item,
+    unit: item.products?.unit || 'pcs' // Extract unit from joined products table
+  }))
 
   const { data: products = [] } = await supabase.from("products").select("id, name, price, category").eq("is_available", true)
 
@@ -40,6 +63,18 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
         </Card>
       </main>
     )
+  }
+
+  // Log any items that might be missing product data for debugging
+  if (process.env.NODE_ENV === 'development') {
+    const itemsWithoutUnits = orderItemsWithUnits.filter(item => !item.unit || item.unit === 'pcs')
+    if (itemsWithoutUnits.length > 0) {
+      console.log('Items without units or using fallback:', itemsWithoutUnits.map(item => ({
+        name: item.product_name,
+        unit: item.unit,
+        hasProductData: !!item.products
+      })))
+    }
   }
 
   const statusConfig = {
@@ -147,19 +182,21 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
               <CardTitle>Order Items</CardTitle>
             </CardHeader>
             <CardContent>
-              {orderItems.length === 0 ? (
+              {orderItemsWithUnits.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">No items found</p>
               ) : (
                 <div className="space-y-3">
-                  {orderItems.map((item) => (
+                  {orderItemsWithUnits.map((item) => (
                     <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{item.product_name}</p>
-                        <p className="text-sm text-muted-foreground">${item.unit_price.toFixed(2)} each</p>
+                        <p className="text-sm text-muted-foreground">
+                          KSh {item.unit_price.toFixed(2)} per {item.unit}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">Qty: {item.quantity}</p>
-                        <p className="text-sm font-bold">${item.total_price.toFixed(2)}</p>
+                        <p className="font-medium">Qty: {item.quantity} {item.unit}</p>
+                        <p className="text-sm font-bold">KSh {item.total_price.toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -168,7 +205,7 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
 
                   <div className="flex justify-between items-center font-bold text-lg">
                     <span>Total:</span>
-                    <span>${order.total_amount.toFixed(2)}</span>
+                    <span>KSh {order.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
               )}
@@ -176,10 +213,9 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
           </Card> */}
           <OrderEditor 
             order={order} 
-            initialItems={orderItems} 
+            initialItems={orderItemsWithUnits} 
             availableProducts={products || []}
           />
-        </div>
         </div>
 
         {/* Actions Sidebar */}
@@ -187,10 +223,14 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
           {/* Order Status */}
           <OrderStatusUpdater order={order} />
 
-          {/* Enhanced Receipt Generator */}
-          <EnhancedReceiptGenerator order={order} items={orderItems} isAdmin={true} />
+          {/* Enhanced Receipt Generator - now with units! */}
+          <EnhancedReceiptGenerator 
+            order={order} 
+            items={orderItemsWithUnits} 
+            isAdmin={true} 
+          />
         </div>
-      
+      </div>
     </main>
   )
 }

@@ -117,8 +117,7 @@ export function OrderEditor({ order, initialItems, availableProducts, onOrderUpd
 
   // Update item quantity
   const updateItemQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return
-    console.log("Updating quantity:", { itemId, newQuantity })
+    
 
     setItems(prev => prev.map(item => {
       if (item.id === itemId) {
@@ -353,7 +352,7 @@ export function OrderEditor({ order, initialItems, availableProducts, onOrderUpd
                       <Input
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value) || 1)}
+                        onChange={(e) => updateItemQuantity(item.id, parseFloat(e.target.value) || 0)}
                         className="w-16 text-center"
                         min="1"
                       />
