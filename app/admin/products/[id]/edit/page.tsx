@@ -27,7 +27,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     price: "",
     category: "",
     unit: "kg",
-    
+    stock_quantity: "",
     is_available: true,
   })
 
@@ -45,6 +45,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: foundProduct.price.toString(),
         category: foundProduct.category,
         unit: foundProduct.unit,
+        stock_quantity: foundProduct.stock_quantity.toString(),
         is_available: foundProduct.is_available,
       })
     }
@@ -61,6 +62,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         price: Number.parseFloat(formData.price),
         category: formData.category,
         unit: formData.unit,
+        stock_quantity: Number.parseInt(formData.stock_quantity),
         is_available: formData.is_available,
       })
 
@@ -170,7 +172,17 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                     </SelectContent>
                   </Select>
                 </div>
-                
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Stock Quantity *</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    min="0"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">

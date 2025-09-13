@@ -256,11 +256,11 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                       <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                           <p className="font-medium">{item.product_name}</p>
-                          <p className="text-sm text-muted-foreground">${item.unit_price.toFixed(2)} each</p>
+                          <p className="text-sm text-muted-foreground">KSh {item.unit_price.toFixed(2)} each</p>
                         </div>
                         <div className="text-right">
                           <p className="font-medium">Qty: {item.quantity}</p>
-                          <p className="text-sm font-bold">${item.total_price.toFixed(2)}</p>
+                          <p className="text-sm font-bold">KSh {item.total_price.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}
@@ -269,7 +269,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
                     <div className="flex justify-between items-center font-bold text-lg">
                       <span>Total:</span>
-                      <span>${order.total_amount.toFixed(2)}</span>
+                      <span>KSh {order.total_amount.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -361,7 +361,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total Amount</span>
-                    <span>${order.total_amount.toFixed(2)}</span>
+                    <span>KSh {order.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>

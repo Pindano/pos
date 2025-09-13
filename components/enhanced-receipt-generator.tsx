@@ -13,6 +13,13 @@ import { generatePDFReceipt, emailReceipt, downloadPDFReceipt } from "@/lib/pdf-
 import { useToast } from "@/hooks/use-toast"
 import type { Order, OrderItem } from "@/lib/types"
 
+interface AdditionalCharge {
+  id: string
+  name: string
+  amount: number
+  description?: string
+}
+
 interface EnhancedReceiptGeneratorProps {
   order: Order
   items?: OrderItem[]
@@ -27,9 +34,11 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
   const [emailAddress, setEmailAddress] = useState(order.customer_email || "")
   const [businessSettings, setBusinessSettings] = useState(null)
   const [paymentConfirmed, setPaymentConfirmed] = useState(order.payment_status === "paid")
+  const [additionalCharges, setAdditionalCharges] = useState<AdditionalCharge[]>([])
 
   useEffect(() => {
     fetchBusinessSettings()
+    fetchAdditionalCharges()
   }, [])
 
   const fetchBusinessSettings = async () => {
@@ -49,6 +58,22 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
         business_email: "orders@freshmarket.com",
         receipt_footer: "Thank you for your business!",
       })
+    }
+  }
+
+  const fetchAdditionalCharges = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("order_additional_charges")
+        .select("*")
+        .eq("order_id", order.id)
+
+      if (error) throw error
+      setAdditionalCharges(data || [])
+    } catch (error) {
+      console.error("Error fetching additional charges:", error)
+      setAdditionalCharges([])
     }
   }
 
@@ -98,6 +123,7 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
       const receiptBlob = await generatePDFReceipt({
         order,
         items,
+        additionalCharges, // Pass additional charges
         businessSettings,
         paymentConfirmed: confirmed,
       })
@@ -128,6 +154,7 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
       const receiptBlob = await generatePDFReceipt({
         order,
         items,
+        additionalCharges, // Pass additional charges
         businessSettings,
         paymentConfirmed: confirmed,
       })
@@ -153,6 +180,11 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
       setIsEmailing(false)
     }
   }
+
+  // Calculate totals including additional charges
+  const itemsTotal = items.reduce((sum, item) => sum + (item.total_price || 0), 0)
+  const chargesTotal = additionalCharges.reduce((sum, charge) => sum + charge.amount, 0)
+  const grandTotal = itemsTotal + chargesTotal
 
   return (
     <Card>
@@ -184,6 +216,49 @@ export function EnhancedReceiptGenerator({ order, items = [], isAdmin = false }:
             </Button>
           )}
         </div>
+
+        {/* Order Summary Preview */}
+        {(items.length > 0 || additionalCharges.length > 0) && (
+          <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+            <h4 className="font-medium text-sm">Receipt will include:</h4>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex justify-between">
+                <span>{items.length} item(s) subtotal:</span>
+                <span>KSh {itemsTotal.toFixed(2)}</span>
+              </div>
+              {additionalCharges.length > 0 && (
+                <div className="flex justify-between">
+                  <span>{additionalCharges.length} additional charge(s):</span>
+                  <span>KSh {chargesTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-medium text-foreground pt-1 border-t">
+                <span>Total:</span>
+                <span>KSh {grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Charges Preview */}
+        {additionalCharges.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Additional Charges to include:</h4>
+            <div className="space-y-1">
+              {additionalCharges.map((charge) => (
+                <div key={charge.id} className="flex items-center justify-between text-xs p-2 bg-blue-50 rounded">
+                  <div>
+                    <span className="font-medium">{charge.name}</span>
+                    {charge.description && (
+                      <span className="text-muted-foreground ml-2">({charge.description})</span>
+                    )}
+                  </div>
+                  <span className="font-medium">KSh {charge.amount.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Email Address Input */}
         <div className="space-y-2">

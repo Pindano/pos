@@ -11,15 +11,23 @@ interface BusinessSettings {
   receipt_footer: string
 }
 
+interface AdditionalCharge {
+  id: string
+  name: string
+  amount: number
+  description?: string
+}
+
 interface ReceiptData {
   order: Order
   items: OrderItem[]
+  additionalCharges?: AdditionalCharge[]
   businessSettings: BusinessSettings
   paymentConfirmed?: boolean
 }
 
 export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
-  const { order, items, businessSettings, paymentConfirmed = false } = data
+  const { order, items, additionalCharges = [], businessSettings, paymentConfirmed = false } = data
 
   // Create new PDF document
   const pdf = new jsPDF({
@@ -125,28 +133,102 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
 
   // Items
   pdf.setFont("helvetica", "normal")
-  let subtotal = 0
+  let itemsSubtotal = 0
 
   items.forEach((item) => {
     const itemTotal = item.unit_price * item.quantity
-    subtotal += itemTotal
+    itemsSubtotal += itemTotal
 
-    pdf.text(item.product_name, 20, yPosition)
+    // Handle long product names by wrapping text
+    const productName = item.product_name.length > 30 
+      ? item.product_name.substring(0, 30) + "..." 
+      : item.product_name
+
+    pdf.text(productName, 20, yPosition)
     pdf.text(item.quantity.toString(), 120, yPosition)
-    pdf.text(`$${item.unit_price.toFixed(2)}`, 140, yPosition)
-    pdf.text(`$${itemTotal.toFixed(2)}`, 170, yPosition)
+    pdf.text(`KSh ${item.unit_price.toFixed(2)}`, 140, yPosition)
+    pdf.text(`KSh ${itemTotal.toFixed(2)}`, 170, yPosition)
     yPosition += 5
   })
 
-  yPosition += 3
-  pdf.line(20, yPosition, 190, yPosition)
-  yPosition += 6
+  // Add spacing before additional charges section
+  if (additionalCharges.length > 0) {
+    yPosition += 3
+    pdf.line(20, yPosition, 190, yPosition)
+    yPosition += 6
 
-  // Total
-  pdf.setFont("helvetica", "bold")
-  pdf.setFontSize(12)
-  pdf.text(`TOTAL: $${order.total_amount.toFixed(2)}`, 170, yPosition, { align: "right" })
-  yPosition += 8
+    // Additional Charges header
+    pdf.setFont("helvetica", "bold")
+    pdf.text("Additional Charges", 20, yPosition)
+    yPosition += 6
+
+    pdf.line(20, yPosition, 190, yPosition)
+    yPosition += 6
+
+    // Additional charges items
+    pdf.setFont("helvetica", "normal")
+    let chargesSubtotal = 0
+
+    additionalCharges.forEach((charge) => {
+      chargesSubtotal += charge.amount
+
+      // Charge name with description if available
+      let chargeName = charge.name
+      if (charge.description) {
+        chargeName += ` (${charge.description})`
+      }
+      
+      // Handle long charge names
+      if (chargeName.length > 50) {
+        chargeName = chargeName.substring(0, 50) + "..."
+      }
+
+      pdf.text(chargeName, 20, yPosition)
+      pdf.text(`KSh ${charge.amount.toFixed(2)}`, 170, yPosition)
+      yPosition += 5
+    })
+
+    yPosition += 3
+    pdf.line(20, yPosition, 190, yPosition)
+    yPosition += 8
+
+    // Subtotals breakdown
+    pdf.setFont("helvetica", "normal")
+    pdf.setFontSize(10)
+    
+    pdf.text(`Items Subtotal:`, 120, yPosition)
+    pdf.text(`KSh ${itemsSubtotal.toFixed(2)}`, 170, yPosition)
+    yPosition += 6
+
+    pdf.text(`Additional Charges:`, 120, yPosition)
+    pdf.text(`KSh ${chargesSubtotal.toFixed(2)}`, 170, yPosition)
+    yPosition += 6
+
+    // Total line
+    pdf.line(120, yPosition, 190, yPosition)
+    yPosition += 6
+
+    // Grand Total
+    pdf.setFont("helvetica", "bold")
+    pdf.setFontSize(12)
+    const grandTotal = itemsSubtotal + chargesSubtotal
+    pdf.text(`TOTAL:`, 120, yPosition)
+    pdf.text(`KSh ${grandTotal.toFixed(2)}`, 170, yPosition)
+    yPosition += 8
+
+  } else {
+    // No additional charges - just show items total
+    yPosition += 3
+    pdf.line(20, yPosition, 190, yPosition)
+    yPosition += 6
+
+    // Total
+    pdf.setFont("helvetica", "bold")
+    pdf.setFontSize(12)
+    pdf.text(`TOTAL:`, 120, yPosition)
+    pdf.text(`KSh ${order.total_amount.toFixed(2)}`, 170, yPosition)
+    yPosition += 8
+  }
 
   // Payment Method
   pdf.setFont("helvetica", "normal")
@@ -161,6 +243,8 @@ export async function generatePDFReceipt(data: ReceiptData): Promise<Blob> {
       total: order.total_amount,
       date: order.created_at,
       customer: order.customer_name,
+      itemsCount: items.length,
+      chargesCount: additionalCharges.length,
     })
 
     const qrCodeDataURL = await QRCode.toDataURL(qrData, {
@@ -227,7 +311,7 @@ export async function emailReceipt(
         <p><strong>Order Details:</strong></p>
         <ul>
           <li>Order ID: #${order.id.slice(0, 8)}</li>
-          <li>Total: $${order.total_amount.toFixed(2)}</li>
+          <li>Total: KSh ${order.total_amount.toFixed(2)}</li>
           <li>Status: ${order.status.replace("_", " ")}</li>
         </ul>
         <p>If you have any questions, please contact us at ${businessSettings.business_phone} or ${businessSettings.business_email}.</p>

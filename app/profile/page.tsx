@@ -10,9 +10,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from "@/components/ui/switch"
 import { User, Bell, LogOut, Settings, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { NotificationCenter } from "@/components/notification-center"
+import { PushNotificationSetup } from "@/components/push-notification-setup"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 interface UserProfile {
@@ -21,6 +24,12 @@ interface UserProfile {
   phone?: string
   address?: string
   full_name?: string
+  notification_preferences?: {
+    push_enabled: boolean
+    email_enabled: boolean
+    order_updates: boolean
+    promotions: boolean
+  }
 }
 
 interface Notification {
@@ -75,13 +84,18 @@ export default function ProfilePage() {
       if (data) {
         setProfile(data)
       } else {
-        // Create profile if it doesn't exist
         setProfile({
           id: userId,
           email: user?.email || "",
           phone: "",
           address: "",
           full_name: "",
+          notification_preferences: {
+            push_enabled: false,
+            email_enabled: true,
+            order_updates: true,
+            promotions: false
+          }
         })
       }
     } catch (error) {
@@ -120,6 +134,7 @@ export default function ProfilePage() {
         phone: profile.phone,
         address: profile.address,
         full_name: profile.full_name,
+        notification_preferences: profile.notification_preferences,
         updated_at: new Date().toISOString(),
       })
 
@@ -138,18 +153,6 @@ export default function ProfilePage() {
       })
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  const markNotificationAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase.from("notifications").update({ read: true }).eq("id", notificationId)
-
-      if (error) throw error
-
-      setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)))
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
     }
   }
 
@@ -177,7 +180,6 @@ export default function ProfilePage() {
     )
   }
 
-  // Show login form if not authenticated
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -281,6 +283,56 @@ export default function ProfilePage() {
 
             <Card>
               <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notification Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                  </div>
+                  <Switch
+                    checked={profile?.notification_preferences?.email_enabled || false}
+                    onCheckedChange={(checked) => setProfile((prev) => prev ? {
+                      ...prev,
+                      notification_preferences: { ...prev.notification_preferences, email_enabled: checked }
+                    } : null)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Order Updates</Label>
+                    <p className="text-sm text-muted-foreground">Get notified about order status changes</p>
+                  </div>
+                  <Switch
+                    checked={profile?.notification_preferences?.order_updates || false}
+                    onCheckedChange={(checked) => setProfile((prev) => prev ? {
+                      ...prev,
+                      notification_preferences: { ...prev.notification_preferences, order_updates: checked }
+                    } : null)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Promotions & Offers</Label>
+                    <p className="text-sm text-muted-foreground">Receive promotional notifications</p>
+                  </div>
+                  <Switch
+                    checked={profile?.notification_preferences?.promotions || false}
+                    onCheckedChange={(checked) => setProfile((prev) => prev ? {
+                      ...prev,
+                      notification_preferences: { ...prev.notification_preferences, promotions: checked }
+                    } : null)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Account Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -298,52 +350,9 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Recent Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {notifications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No notifications yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                          notification.read ? "bg-background" : "bg-muted/50"
-                        }`}
-                        onClick={() => !notification.read && markNotificationAsRead(notification.id)}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-medium">{notification.title}</h4>
-                              {!notification.read && (
-                                <Badge variant="destructive" className="h-2 w-2 rounded-full p-0" />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(notification.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {notification.type}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Reuse existing components */}
+            <PushNotificationSetup />
+            <NotificationCenter />
           </TabsContent>
         </Tabs>
       </main>

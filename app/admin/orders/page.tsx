@@ -258,7 +258,7 @@ export default function AdminOrdersPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">Total Amount</p>
-                        <p className="text-lg font-bold">${order.total_amount.toFixed(2)}</p>
+                        <p className="text-lg font-bold">KSh {order.total_amount.toFixed(2)}</p>
                         <Badge variant={order.payment_status === "paid" ? "default" : "secondary"}>
                           {order.payment_status.toUpperCase()}
                         </Badge>

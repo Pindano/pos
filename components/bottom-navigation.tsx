@@ -1,13 +1,14 @@
 "use client"
-
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Home, ShoppingCart, Package, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useCartStore } from "@/lib/store"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
-const navigationItems = [
+const allNavigationItems = [
   {
     name: "Home",
     href: "/",
@@ -23,8 +24,8 @@ const navigationItems = [
     name: "Orders",
     href: "/orders",
     icon: Package,
+    requiresAuth: true, // Mark this item as requiring authentication
   },
-  
   {
     name: "Profile",
     href: "/profile",
@@ -35,9 +36,45 @@ const navigationItems = [
 export function BottomNavigation() {
   const pathname = usePathname()
   const { getTotalItems } = useCartStore()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    
+    // Check initial auth state
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+    }
+    
+    checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsAuthenticated(!!session?.user)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Don't show bottom nav on admin pages
   if (pathname.startsWith("/admin")) {
+    return null
+  }
+
+  // Filter navigation items based on auth state
+  const navigationItems = allNavigationItems.filter(item => {
+    // If the item requires auth and user is not authenticated, don't show it
+    if (item.requiresAuth && !isAuthenticated) {
+      return false
+    }
+    return true
+  })
+
+  // Don't render until we know the auth state to prevent flash
+  if (isAuthenticated === null) {
     return null
   }
 
@@ -48,7 +85,7 @@ export function BottomNavigation() {
           const isActive = pathname === item.href
           const Icon = item.icon
           const totalItems = getTotalItems()
-
+          
           return (
             <Link
               key={item.name}

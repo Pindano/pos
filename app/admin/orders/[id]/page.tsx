@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, User, MapPin, Phone, Mail, Calendar, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { EnhancedReceiptGenerator } from "@/components/enhanced-receipt-generator"
+import { OrderEditor } from "@/components/order-editor"
 import { OrderStatusUpdater } from "@/components/order-status-updater"
 
 interface AdminOrderDetailsPageProps {
@@ -21,6 +22,8 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
 
   // Fetch order items
   const { data: orderItems = [], error: itemsError } = await supabase.from("order_items").select("*").eq("order_id", id)
+
+  const { data: products = [] } = await supabase.from("products").select("id, name, price, category").eq("is_available", true)
 
   if (orderError || !order) {
     return (
@@ -91,7 +94,7 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold">${order.total_amount.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">KSh {order.total_amount.toFixed(2)}</p>
                   <p className="text-sm text-muted-foreground">Total Amount</p>
                 </div>
               </div>
@@ -139,7 +142,7 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
           </Card>
 
           {/* Order Items */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Order Items</CardTitle>
             </CardHeader>
@@ -170,7 +173,13 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
+          <OrderEditor 
+            order={order} 
+            initialItems={orderItems} 
+            availableProducts={products || []}
+          />
+        </div>
         </div>
 
         {/* Actions Sidebar */}
@@ -181,7 +190,7 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
           {/* Enhanced Receipt Generator */}
           <EnhancedReceiptGenerator order={order} items={orderItems} isAdmin={true} />
         </div>
-      </div>
+      
     </main>
   )
 }

@@ -70,7 +70,7 @@ export default function AdminAnalyticsPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">KSh {totalRevenue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">All time revenue</p>
             </CardContent>
           </Card>
@@ -92,7 +92,7 @@ export default function AdminAnalyticsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${averageOrderValue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">KSh {averageOrderValue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">Per order</p>
             </CardContent>
           </Card>
@@ -126,7 +126,7 @@ export default function AdminAnalyticsPage() {
                 {revenueByDay.map((day, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span>{day.day}</span>
-                    <span className="font-medium">${day.revenue.toFixed(2)}</span>
+                    <span className="font-medium">KSh {day.revenue.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -152,7 +152,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${product.price.toFixed(2)}</p>
+                      <p className="font-medium">KSh {product.price.toFixed(2)}</p>
                       <p className="text-sm text-muted-foreground">{100 - product.stock_quantity} sold</p>
                     </div>
                   </div>
