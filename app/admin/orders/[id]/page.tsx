@@ -8,6 +8,8 @@ import Link from "next/link"
 import { EnhancedReceiptGenerator } from "@/components/enhanced-receipt-generator"
 import { OrderEditor } from "@/components/order-editor"
 import { OrderStatusUpdater } from "@/components/order-status-updater"
+import { CustomerDetailsEditor } from "@/components/customer-details-editor"
+import { DuplicateOrderButton } from "@/components/duplicate-order-button"
 
 interface AdminOrderDetailsPageProps {
   params: Promise<{ id: string }>
@@ -65,18 +67,6 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
     )
   }
 
-  // Log any items that might be missing product data for debugging
-  if (process.env.NODE_ENV === 'development') {
-    const itemsWithoutUnits = orderItemsWithUnits.filter(item => !item.unit || item.unit === 'pcs')
-    if (itemsWithoutUnits.length > 0) {
-      console.log('Items without units or using fallback:', itemsWithoutUnits.map(item => ({
-        name: item.product_name,
-        unit: item.unit,
-        hasProductData: !!item.products
-      })))
-    }
-  }
-
   const statusConfig = {
     pending: { color: "text-yellow-600", bg: "bg-yellow-100" },
     confirmed: { color: "text-blue-600", bg: "bg-blue-100" },
@@ -88,13 +78,14 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
 
   return (
     <main className="container mx-auto px-4 py-6">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <Link href="/admin/orders">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Orders
           </Button>
         </Link>
+        <DuplicateOrderButton order={order} items={orderItemsWithUnits} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -136,84 +127,22 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
             </CardContent>
           </Card>
 
-          {/* Customer Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Customer Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{order.customer_name}</span>
-              </div>
-              {order.customer_phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{order.customer_phone}</span>
-                </div>
-              )}
-              {order.customer_email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{order.customer_email}</span>
-                </div>
-              )}
-              {order.customer_address && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <span>{order.customer_address}</span>
-                </div>
-              )}
-              {order.notes && (
-                <div className="mt-4 p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-1">Special Instructions:</p>
-                  <p className="text-sm">{order.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Customer Information - Editable */}
+          <CustomerDetailsEditor
+            orderId={order.id}
+            initialDetails={{
+              customer_name: order.customer_name,
+              customer_phone: order.customer_phone,
+              customer_email: order.customer_email,
+              customer_address: order.customer_address,
+              notes: order.notes
+            }}
+          />
 
           {/* Order Items */}
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Order Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {orderItemsWithUnits.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No items found</p>
-              ) : (
-                <div className="space-y-3">
-                  {orderItemsWithUnits.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.product_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          KSh {item.unit_price.toFixed(2)} per {item.unit}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">Qty: {item.quantity} {item.unit}</p>
-                        <p className="text-sm font-bold">KSh {item.total_price.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  ))}
-
-                  <Separator />
-
-                  <div className="flex justify-between items-center font-bold text-lg">
-                    <span>Total:</span>
-                    <span>KSh {order.total_amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card> */}
-          <OrderEditor 
-            order={order} 
-            initialItems={orderItemsWithUnits} 
+          <OrderEditor
+            order={order}
+            initialItems={orderItemsWithUnits}
             availableProducts={products || []}
           />
         </div>
@@ -224,10 +153,10 @@ export default async function AdminOrderDetailsPage({ params }: AdminOrderDetail
           <OrderStatusUpdater order={order} />
 
           {/* Enhanced Receipt Generator - now with units! */}
-          <EnhancedReceiptGenerator 
-            order={order} 
-            items={orderItemsWithUnits} 
-            isAdmin={true} 
+          <EnhancedReceiptGenerator
+            order={order}
+            items={orderItemsWithUnits}
+            isAdmin={true}
           />
         </div>
       </div>

@@ -33,7 +33,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   const categories = ["vegetables", "fruits", "grains", "dairy", "meat", "spices", "beverages", "snacks", "other"]
 
-  const units = ["kg", "g", "piece", "bunch", "liter", "ml", "pack"]
+  const units = ["kg", "g", "piece", "bunch", "liter", "ml", "pack", "cartons"]
 
   useEffect(() => {
     const foundProduct = getProductById(params.id)
